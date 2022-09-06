@@ -60,6 +60,10 @@ module Rack
           end
         end
 
+        if path == '/redirect-after-cookie-set-for-different-path' && method == 'GET'
+          return [302, { 'set-cookie' => "value=1; path=/cookies;", 'location' => '/cookies/show' }, []]
+        end
+
         if path == '/redirected'
           additional_info = if method == 'GET'
             ", session #{session.inspect} with options #{env['rack.session.options'].inspect}"
@@ -114,7 +118,7 @@ module Rack
 
         if path == '/cookies/set-multiple' && method == 'GET'
           value = Rack.release >= '2.3' ? ["key1=value1", "key2=value2"] : "key1=value1\nkey2=value2"
-          
+
           return [200, { 'set-cookie' => value }, ['Set']]
         end
 
