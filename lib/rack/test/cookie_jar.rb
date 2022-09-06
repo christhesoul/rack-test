@@ -12,7 +12,7 @@ module Rack
 
       # The name of the cookie, will be a string
       attr_reader :name
-      
+
       # The value of the cookie, will be a string or nil if there is no value.
       attr_reader :value
 
@@ -86,8 +86,8 @@ module Rack
         expires && expires < Time.now
       end
 
-      # Whether the cookie is valid for the given URI.
-      def valid?(uri)
+      # Whether the cookie is valid to set or send for the given URI.
+      def valid?(uri, context = :sending)
         uri ||= default_uri
 
         uri.host = @default_host if uri.host.nil?
@@ -95,7 +95,7 @@ module Rack
         real_domain = domain =~ /^\./ ? domain[1..-1] : domain
         !!((!secure? || (secure? && uri.scheme == 'https')) &&
           uri.host =~ Regexp.new("#{'^' if @exact_domain_match}#{Regexp.escape(real_domain)}$", Regexp::IGNORECASE) &&
-          uri.path =~ Regexp.new("^#{Regexp.escape(path)}"))
+          (context == :sending ? uri.path =~ Regexp.new("^#{Regexp.escape(path)}") : true))
       end
 
       # Cookies that do not match the URI will not be sent in requests to the URI.
@@ -190,7 +190,7 @@ module Rack
 
         raw_cookies.each do |raw_cookie|
           cookie = Cookie.new(raw_cookie, uri, @default_host)
-          self << cookie if cookie.valid?(uri)
+          self << cookie if cookie.valid?(uri, :setting)
         end
       end
 
